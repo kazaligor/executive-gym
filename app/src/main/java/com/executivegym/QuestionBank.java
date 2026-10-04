@@ -148,5 +148,19 @@ public class QuestionBank {
         return out;
     }
 
+
+    public static List<String> skills(){
+        return Arrays.asList("Стратегическое мышление","Решение и judgment","Лидерство и люди","Бизнес и P&L","Коммуникация руководителя","Личная эффективность");
+    }
+
+    public static List<Question> forSkill(ProgressStore store, String skill, int count){
+        List<Question> pool=new ArrayList<>();
+        for(Question q:ALL) if(q.skill.equals(skill)) pool.add(q);
+        Collections.shuffle(pool,new Random(System.nanoTime()));
+        Collections.sort(pool,(a,b)->Integer.compare(a.difficulty,b.difficulty));
+        if(pool.size()>count) return new ArrayList<>(pool.subList(0,count));
+        return pool;
+    }
+
     public static int size(){return ALL.size();}
 }
