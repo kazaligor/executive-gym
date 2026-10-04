@@ -106,7 +106,7 @@ const pct=x=>Math.round(x);
 let session=[],i=0,hits=0,mode="daily",duration=30;
 let todayKey=()=>new Date().toISOString().slice(0,10);
 function level(){return Math.floor(p.xp/250)+1}
-function menu(){return '<div class="nav"><button data-action="home">Главная</button><button data-action="stats">Статистика</button><button data-action="achievements">Достижения</button></div>'}
+function menu(){return '<div class="nav"><button data-action="home">Главная</button></div>'}
 function home(){
  const list=S.map(s=>'<div class="skill"><button class="secondary skill-btn" data-skill="'+esc(s)+'">'+esc(s)+'</button><div class="score">'+p.scores[s]+'/100</div></div>').join("");
  document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">EXECUTIVE GYM</div><div class="subtitle">Тренажёр управленческого мышления · Senior PM → Head → Director/VP</div><div class="stats"><div class="stat"><b>УРОВЕНЬ '+level()+'</b><span>'+p.xp+' XP</span></div><div class="stat"><b>🔥 '+p.streak+' дней</b><span>'+p.correct+'/'+p.answered+' верных</span></div></div><div class="card"><b>Ежедневная тренировка</b><p class="muted">Полноценная сессия 30–60 минут. Выбери длительность:</p><div class="duration">'+[30,45,60].map(x=>'<button class="secondary dur" data-d="'+x+'">'+x+' мин</button>').join("")+'</div><button class="primary" id="dailyBtn">Начать тренировку</button></div><button class="boss" data-action="boss">⚡ BOSS CHALLENGE</button><div class="section-title">ТОЧЕЧНАЯ ТРЕНИРОВКА</div><div class="muted">10 вопросов по выбранному навыку. Система чаще возвращает слабые темы и ошибки.</div>'+list+'<button class="secondary" style="margin-top:14px" data-action="mistakes">↻ Повторить мои ошибки</button><div class="footer">Не учи правильные варианты наизусть. Тренируй judgement: последствия, trade-offs, риск, economics, people и executive communication.</div></main>';
@@ -150,12 +150,6 @@ function finish(){
  checkAchievements();save();
  let score=Math.round(hits/session.length*100),xp=hits*12+(session.length-hits)*4;
  document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">'+(mode==="boss"?"BOSS CHALLENGE ЗАВЕРШЁН":mode==="daily"?"ДЕНЬ ЗАВЕРШЁН":"ТРЕНИРОВКА ЗАВЕРШЕНА")+'</div><div class="bigxp">+'+xp+' XP</div><div class="result">'+hits+' из '+session.length+' · '+score+'%</div><div class="card"><b>Профиль обновлён</b><p class="muted">Слабые навыки и ошибочные вопросы теперь получают больший вес в следующих тренировках.</p></div>'+(mode==="boss"?'<div class="card boss-result">Boss Challenge — уровень Director/VP. В следующих версиях здесь появятся ветвящиеся кейсы и итоговая оценка judgement.</div>':"")+'<button class="primary" onclick="'+(mode==="daily"?"home()":mode==="boss"?"home()":"startSkill("+JSON.stringify(mode)+")")+'">'+(mode==="daily"||mode==="boss"||mode==="mistakes"?"Вернуться к главной":"Повторить этот навык")+'</button></main>';
-}
-function stats(){
- let days=[...Array(7)].map((_,k)=>{let d=new Date();d.setDate(d.getDate()-(6-k));return d.toISOString().slice(0,10)});
- let rows=days.map(d=>{let a=p.history.filter(x=>x.date===d),n=a.reduce((s,x)=>s+x.total,0),c=a.reduce((s,x)=>s+x.correct,0);return '<div class="statrow"><b>'+d.slice(5)+'</b><span>'+n+' вопросов · '+(n?Math.round(c/n*100):0)+'%</span></div>'}).join("");
- let total=p.history.reduce((s,x)=>s+x.total,0),acc=total?Math.round(p.history.reduce((s,x)=>s+x.correct,0)/total*100):0;
- document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">НЕДЕЛЬНАЯ СТАТИСТИКА</div><div class="stats"><div class="stat"><b>'+total+'</b><span>вопросов за 7 дней</span></div><div class="stat"><b>'+acc+'%</b><span>точность</span></div></div><div class="card"><div class="section-title">ПО ДНЯМ</div>'+rows+'</div><div class="section-title">НАВЫКИ</div>'+S.map(s=>'<div class="statrow"><b>'+esc(s)+'</b><span>'+p.scores[s]+'/100</span></div>').join("")+'<div class="section-title">ОШИБКИ</div><div class="card">'+Object.entries(p.mistakes).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([id,n])=>{let q=Q.find(x=>x.id===id);return q?'<div class="statrow"><span>'+esc(q.t)+'</span><b>'+n+'×</b></div>':""}).join("")+'</div></main>';
 }
 function checkAchievements(){
  let a=new Set(p.achievements);
