@@ -65,7 +65,7 @@ q("ef6",S[5],"Leverage","Вы лично исправляете 10 повтор�
 q("ef7",S[5],"Escalation load","Вас заваливают вопросами, которые команда может решить сама. Что внедрить?",1,["Не отвечать","Decision matrix + office hours + thresholds for escalation","Больше встреч","Новый чат"],"Правила эскалации переводят поток вопросов в систему.","operating model",["decision matrix"]),
 q("ef8",S[5],"Weekly review","Что является результатом сильного weekly review?",2,["Список задач","Понимание outcomes, bottlenecks, decisions, risks и следующего фокуса","Отчёт","Количество часов"],"Review должен менять следующий цикл, а не только описывать прошлый.","weekly review",["bottleneck"]),
 q("ef9",S[5],"Stop doing","Что отличает Head от сильного Senior PM?",2,["Больше часов","Умение перестать делать лично то, что должно работать через систему и людей","Больше задач","Больше встреч"],"Переход к Head — это рост leverage и масштаба ответственности.","leadership scale",["leverage"]),
-q("ef10",S[5],"Personal operating system","Как строить личную систему управления?",1,["Только to-do list","Цели → priorities → calendar → decision log → review → learning loop","Только календарь","Только OKR"],"Personal operating system соединяет намерения, execution и learning.","personal effectiveness","learning loop"])
+q("ef10",S[5],"Personal operating system","Как строить личную систему управления?",1,["Только to-do list","Цели → priorities → calendar → decision log → review → learning loop","Только календарь","Только OKR"],"Personal operating system соединяет намерения, execution и learning.","personal effectiveness",2,["learning loop"])
 ];
 
 const G=[
