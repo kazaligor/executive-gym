@@ -25,17 +25,40 @@ const Q=[
 ["Личная эффективность","Делегирование вверх","Команда приносит проблему без вариантов. Что спросить?",["Почему не знаете?","Какие варианты ты видишь и что рекомендуешь?","Я сам решу","Напиши подробнее"],1,"Так вы развиваете judgement команды.","Upward delegation",2],
 ["Личная эффективность","Неделя","Как понять, была ли неделя руководителя продуктивной?",["Часы","Закрытые задачи","Какие решения принял, блокеры снял и что улучшил в системе и команде","Количество встреч"],2,"Executive productivity — leverage, а не занятость.","Activity bias",2]
 ];
-let p=JSON.parse(localStorage.getItem("eg")||'{"xp":0,"streak":0,"lastDay":"","answered":0,"correct":0,"scores":{}}');
-S.forEach(s=>{if(p.scores[s]==null)p.scores[s]=50});
+
+// v2: новый пользователь начинает с 0/100.
+// Если у пользователя была старая версия MVP с начальными 50/100, один раз сбрасываем только skill scores.
+let p=JSON.parse(localStorage.getItem("eg")||'{"xp":0,"streak":0,"lastDay":"","answered":0,"correct":0,"scores":{},"schemaVersion":2}');
+if(p.schemaVersion!==2){
+  p.scores={};
+  p.schemaVersion=2;
+}
+S.forEach(s=>{if(p.scores[s]==null)p.scores[s]=0});
+
 let session=[],i=0,hits=0,mode="daily";
 const save=()=>localStorage.setItem("eg",JSON.stringify(p));
 const esc=x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-function home(){let list=S.map(s=>'<div class="skill"><button class="secondary" onclick="skill('+JSON.stringify(s)+')">'+esc(s)+'</button><div class="score">'+p.scores[s]+'/100</div></div>').join("");document.querySelector("#app").innerHTML='<main class="shell"><div class="brand">EXECUTIVE GYM</div><div class="subtitle">Тренажёр управленческого мышления</div><div class="stats"><div class="stat"><b>УРОВЕНЬ '+(Math.floor(p.xp/100)+1)+'</b><span>'+p.xp+' XP</span></div><div class="stat"><b>🔥 '+p.streak+' дней</b><span>'+p.correct+'/'+p.answered+' верных</span></div></div><button class="primary" onclick="daily()">Ежедневная тренировка · 45 минут</button><div class="card" style="margin-top:10px">Ежедневный режим смешивает 6 навыков и чаще возвращает темы, где результат слабее.</div><div class="section-title">ТОЧЕЧНАЯ ТРЕНИРОВКА</div><div style="color:#aaa;margin-bottom:10px">Выбери один навык и прокачивай только его.</div>'+list+'<div class="footer">Принцип: не запоминай правильный ответ. Учись видеть последствия, trade-offs, риск, leverage и уровень ответственности.<br><br>После первого открытия приложение работает без интернета.</div></main>'}
-function pick(skill,n){let a=Q.filter(q=>!skill||q[0]===skill).slice();a.sort((x,y)=>(p.scores[x[0]]-p.scores[y[0]])+(x[6]-y[6])*3);let out=[];while(out.length<n&&a.length){let k=Math.min(a.length,Math.max(1,Math.ceil(a.length/3)));out.push(a.splice(Math.floor(Math.random()*k),1)[0])}return out}
+
+function home(){
+  let list=S.map(s=>'<div class="skill"><button class="secondary skill-btn" data-skill="'+esc(s)+'">'+esc(s)+'</button><div class="score">'+p.scores[s]+'/100</div></div>').join("");
+  document.querySelector("#app").innerHTML='<main class="shell"><div class="brand">EXECUTIVE GYM</div><div class="subtitle">Тренажёр управленческого мышления</div><div class="stats"><div class="stat"><b>УРОВЕНЬ '+(Math.floor(p.xp/100)+1)+'</b><span>'+p.xp+' XP</span></div><div class="stat"><b>🔥 '+p.streak+' дней</b><span>'+p.correct+'/'+p.answered+' верных</span></div></div><button class="primary" onclick="daily()">Ежедневная тренировка · 45 минут</button><div class="card" style="margin-top:10px">Ежедневный режим смешивает 6 навыков и чаще возвращает темы, где результат слабее.</div><div class="section-title">ТОЧЕЧНАЯ ТРЕНИРОВКА</div><div style="color:#aaa;margin-bottom:10px">Выбери один навык и прокачивай только его.</div>'+list+'<div class="footer">Принцип: не запоминай правильный ответ. Учись видеть последствия, trade-offs, риск, leverage и уровень ответственности.<br><br>После первого открытия приложение работает без интернета.</div></main>';
+  document.querySelectorAll(".skill-btn").forEach(btn=>btn.addEventListener("click",()=>startSkill(btn.dataset.skill)));
+}
+
+function pick(skill,n){
+  let a=Q.filter(q=>!skill||q[0]===skill).slice();
+  a.sort((x,y)=>(p.scores[x[0]]-p.scores[y[0]])+(x[6]-y[6])*3);
+  let out=[];
+  while(out.length<n&&a.length){
+    let k=Math.min(a.length,Math.max(1,Math.ceil(a.length/3)));
+    out.push(a.splice(Math.floor(Math.random()*k),1)[0]);
+  }
+  return out;
+}
 function daily(){mode="daily";session=[];let seen=new Set();pick(null,24).forEach(q=>{if(session.length<12&&!seen.has(q[0])){session.push(q);seen.add(q[0])}});for(const q of pick(null,24))if(session.length<15&&!session.includes(q))session.push(q);i=0;hits=0;question()}
-function skill(s){mode=s;session=pick(s,8);i=0;hits=0;question()}
+function startSkill(s){mode=s;session=pick(s,8);i=0;hits=0;question()}
 function question(){let q=session[i],pct=Math.round(i/session.length*100);document.querySelector("#app").innerHTML='<main class="shell"><div class="topbar"><button class="back" onclick="home()">← Назад</button><b>'+(mode==="daily"?"ЕЖЕДНЕВНАЯ":"ТОЧЕЧНАЯ")+'</b></div><div class="progress"><i style="width:'+pct+'%"></i></div><div class="question-no">'+(i+1)+' / '+session.length+' · '+esc(q[0])+'</div><div class="question-title">'+esc(q[1])+'</div><div class="card scenario">'+esc(q[2])+'</div><div class="instruction">Выбери действие руководителя.</div><div id="opts">'+q[3].map((o,n)=>'<button class="option" onclick="choose('+n+')">'+(n+1)+'. '+esc(o)+'</button>').join("")+'</div></main>'}
 function choose(n){let q=session[i],ok=n===q[4];if(ok)hits++;p.scores[q[0]]=Math.max(0,Math.min(100,p.scores[q[0]]+(ok?4:-3)));p.xp+=ok?12:4;p.answered++;if(ok)p.correct++;save();document.querySelectorAll(".option").forEach((b,k)=>{b.disabled=true;if(k===q[4])b.classList.add("correct");if(k===n&&k!==q[4])b.classList.add("wrong")});document.querySelector("#opts").insertAdjacentHTML("afterend",'<div class="feedback card"><h3>'+(ok?"✓ Верно":"✕ Разбор решения")+'</h3><p>'+esc(q[5])+'<br><br><b>Тип ошибки:</b> '+esc(q[6])+'</p></div><button class="primary" style="margin-top:12px" onclick="'+(i+1<session.length?"next()":"finish()")+'">'+(i+1<session.length?"Следующее":"Завершить")+'</button>')}
 function next(){i++;question()}
-function finish(){if(mode==="daily"){let t=new Date().toISOString().slice(0,10);if(p.lastDay!==t){let d=new Date();d.setDate(d.getDate()-1);let prev=d.toISOString().slice(0,10);p.streak=p.lastDay===prev?p.streak+1:1;p.lastDay=t;save()}}let pct=Math.round(hits/session.length*100),xp=hits*12+(session.length-hits)*4;document.querySelector("#app").innerHTML='<main class="shell"><div class="brand">'+(mode==="daily"?"ДЕНЬ ЗАВЕРШЁН":"ТРЕНИРОВКА ЗАВЕРШЕНА")+'</div><div style="font-size:38px;font-weight:800;color:var(--red);margin:18px 0 6px">+'+xp+' XP</div><div style="font-size:20px;font-weight:750">'+hits+' из '+session.length+' решений · '+pct+'%</div><div class="card" style="margin-top:18px">'+(mode==="daily"?"Следующая тренировка сильнее сфокусируется на слабых навыках.":"Профиль навыка обновлён. Повтори тренировку позже.")+'</div>'+(mode!=="daily"?'<button class="primary" style="margin-top:10px" onclick="skill('+JSON.stringify(mode)+')">Повторить этот навык</button>':"")+'<button class="secondary" style="margin-top:10px" onclick="home()">Вернуться к навыкам</button></main>'}
+function finish(){if(mode==="daily"){let t=new Date().toISOString().slice(0,10);if(p.lastDay!==t){let d=new Date();d.setDate(d.getDate()-1);let prev=d.toISOString().slice(0,10);p.streak=p.lastDay===prev?p.streak+1:1;p.lastDay=t;save()}}let pct=Math.round(hits/session.length*100),xp=hits*12+(session.length-hits)*4;document.querySelector("#app").innerHTML='<main class="shell"><div class="brand">'+(mode==="daily"?"ДЕНЬ ЗАВЕРШЁН":"ТРЕНИРОВКА ЗАВЕРШЕНА")+'</div><div style="font-size:38px;font-weight:800;color:var(--red);margin:18px 0 6px">+'+xp+' XP</div><div style="font-size:20px;font-weight:750">'+hits+' из '+session.length+' решений · '+pct+'%</div><div class="card" style="margin-top:18px">'+(mode==="daily"?"Следующая тренировка сильнее сфокусируется на слабых навыках.":"Профиль навыка обновлён. Повтори тренировку позже.")+'</div>'+(mode!=="daily"?'<button class="primary" style="margin-top:10px" onclick="startSkill('+JSON.stringify(mode)+')">Повторить этот навык</button>':"")+'<button class="secondary" style="margin-top:10px" onclick="home()">Вернуться к навыкам</button></main>'}
 home();
