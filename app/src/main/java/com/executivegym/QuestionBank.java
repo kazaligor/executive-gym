@@ -205,6 +205,8 @@ public class QuestionBank {
         new String[]{"Сколько часов работал","Сколько задач закрыл","Какие решения принял, какие блокеры снял, что улучшил в системе и команде","Сколько встреч провёл"},2,
         "Executive productivity измеряется leverage, а не занятостью.","Activity bias",2);
 
+    }
+
     private static void add(String s,String t,String sc,String[] o,int c,String e,String er,int d){
         ALL.add(new Question(s,t,sc,o,c,e,er,d));
     }
