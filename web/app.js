@@ -78,9 +78,27 @@ Q.forEach(x=>{
  }
 });
 
+// Canonical answer key — audited against every option and explanation.
+const ANSWERS={
+ st1:2,st2:1,st3:2,st4:2,st5:1,st6:1,st7:1,st8:1,st9:1,st10:2,
+ de1:2,de2:1,de3:1,de4:0,de5:1,de6:1,de7:1,de8:1,de9:1,de10:1,
+ le1:1,le2:1,le3:2,le4:1,le5:1,le6:1,le7:1,le8:1,le9:1,le10:1,
+ bu1:1,bu2:1,bu3:2,bu4:1,bu5:1,bu6:1,bu7:1,bu8:1,bu9:1,bu10:1,
+ co1:1,co2:1,co3:1,co4:1,co5:1,co6:1,co7:1,co8:1,co9:1,co10:1,
+ ef1:1,ef2:1,ef3:1,ef4:1,ef5:1,ef6:1,ef7:1,ef8:1,ef9:1,ef10:1
+};
+Q.forEach(x=>{if(ANSWERS[x.id]!==undefined)x.a=ANSWERS[x.id]});
+Q.forEach(x=>{
+ if(!Array.isArray(x.o)||!Number.isInteger(x.a)||x.a<0||x.a>=x.o.length){
+   throw new Error("Invalid answer key: "+x.id);
+ }
+});
 
-let p=JSON.parse(localStorage.getItem("eg")||"null")||{xp:0,streak:0,lastDay:"",answered:0,correct:0,scores:{},mistakes:{},history:[],achievements:[],schemaVersion:4};
-if(p.schemaVersion<4){p.scores={};p.mistakes={};p.history=[];p.achievements=[];p.schemaVersion=4}
+
+let p=JSON.parse(localStorage.getItem("eg")||"null")||{xp:0,streak:0,lastDay:"",answered:0,correct:0,scores:{},mistakes:{},history:[],achievements:[],schemaVersion:5};
+if(p.schemaVersion<5){
+ p={xp:0,streak:0,lastDay:"",answered:0,correct:0,scores:{},mistakes:{},history:[],achievements:[],schemaVersion:5};
+}
 S.forEach(s=>{if(p.scores[s]==null)p.scores[s]=0});
 const save=()=>localStorage.setItem("eg",JSON.stringify(p));
 const esc=x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
