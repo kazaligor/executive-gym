@@ -147,27 +147,9 @@ function finish(){
  p.history.push({date:now,type,skill:type==="skill"?mode:null,total:session.length,correct:hits,xp:hits*12+(session.length-hits)*4});
  p.history=p.history.slice(-90);
  if(type==="daily"&&p.lastDay!==now){let d=new Date();d.setDate(d.getDate()-1);let prev=d.toISOString().slice(0,10);p.streak=p.lastDay===prev?p.streak+1:1;p.lastDay=now}
- checkAchievements();save();
+ save();
  let score=Math.round(hits/session.length*100),xp=hits*12+(session.length-hits)*4;
  document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">'+(mode==="boss"?"BOSS CHALLENGE ЗАВЕРШЁН":mode==="daily"?"ДЕНЬ ЗАВЕРШЁН":"ТРЕНИРОВКА ЗАВЕРШЕНА")+'</div><div class="bigxp">+'+xp+' XP</div><div class="result">'+hits+' из '+session.length+' · '+score+'%</div><div class="card"><b>Профиль обновлён</b><p class="muted">Слабые навыки и ошибочные вопросы теперь получают больший вес в следующих тренировках.</p></div>'+(mode==="boss"?'<div class="card boss-result">Boss Challenge — уровень Director/VP. В следующих версиях здесь появятся ветвящиеся кейсы и итоговая оценка judgement.</div>':"")+'<button class="primary" onclick="'+(mode==="daily"?"home()":mode==="boss"?"home()":"startSkill("+JSON.stringify(mode)+")")+'">'+(mode==="daily"||mode==="boss"||mode==="mistakes"?"Вернуться к главной":"Повторить этот навык")+'</button></main>';
-}
-function checkAchievements(){
- let a=new Set(p.achievements);
- const add=(id,name)=>{if(!a.has(id))a.add(id)};
- if(p.answered>=1)add("first","Первое решение");
- if(p.answered>=50)add("50","50 решений");
- if(p.answered>=100)add("100","100 решений");
- if(p.streak>=3)add("streak3","Серия 3 дня");
- if(p.streak>=7)add("streak7","Серия 7 дней");
- if(p.correct>=50)add("master50","50 правильных решений");
- if(p.history.some(x=>x.type==="boss"))add("boss","Первый Boss Challenge");
- if(S.every(s=>p.scores[s]>=50))add("balanced","Сбалансированный профиль");
- p.achievements=[...a];
-}
-function achievements(){
- checkAchievements();
- let all=[["first","Первое решение","Ответь на первый вопрос"],["50","50 решений","Реши 50 вопросов"],["100","100 решений","Реши 100 вопросов"],["streak3","Серия 3 дня","Тренируйся 3 дня подряд"],["streak7","Серия 7 дней","Тренируйся 7 дней подряд"],["master50","50 правильных","Дай 50 правильных ответов"],["boss","Boss Challenge","Пройди первый Boss Challenge"],["balanced","Баланс","Достигни 50/100 во всех навыках"]];
- document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">ДОСТИЖЕНИЯ</div>'+all.map(x=>'<div class="achievement '+(p.achievements.includes(x[0])?"earned":"")+'"><b>'+(p.achievements.includes(x[0])?"✓ ":"○ ")+esc(x[1])+'</b><span>'+esc(x[2])+'</span></div>').join("")+'</main>';
 }
 home();
 
@@ -176,9 +158,7 @@ document.addEventListener("click",function(e){
  if(!el)return;
  const action=el.dataset.action;
  if(action==="home")home();
- else if(action==="stats")stats();
 
- else if(action==="achievements")achievements();
  else if(action==="boss")boss();
  else if(action==="mistakes")mistakeTraining();
 
