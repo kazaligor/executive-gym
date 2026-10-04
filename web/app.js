@@ -103,7 +103,7 @@ S.forEach(s=>{if(p.scores[s]==null)p.scores[s]=0});
 const save=()=>localStorage.setItem("eg",JSON.stringify(p));
 const esc=x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 const pct=x=>Math.round(x);
-let session=[],i=0,hits=0,mode="daily",duration=30;
+let session=[],i=0,hits=0,mode="daily";
 let todayKey=()=>new Date().toISOString().slice(0,10);
 function level(){return Math.floor(p.xp/250)+1}
 function menu(){return '<div class="nav"><button data-action="home">Главная</button></div>'}
@@ -111,7 +111,6 @@ function home(){
  const list=S.map(s=>'<div class="skill"><button class="secondary skill-btn" data-skill="'+esc(s)+'">'+esc(s)+'</button><div class="score">'+p.scores[s]+'/100</div></div>').join("");
  document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">EXECUTIVE GYM</div><div class="subtitle">Тренажёр управленческого мышления · Senior PM → Head → Director/VP</div><div class="stats"><div class="stat"><b>УРОВЕНЬ '+level()+'</b><span>'+p.xp+' XP</span></div><div class="stat"><b>🔥 '+p.streak+' дней</b><span>'+p.correct+'/'+p.answered+' верных</span></div></div><div class="card"><b>Ежедневная тренировка</b><p class="muted">Полноценная сессия 30–60 минут. Выбери длительность:</p><div class="duration">'+[30,45,60].map(x=>'<button class="secondary dur" data-d="'+x+'">'+x+' мин</button>').join("")+'</div><button class="primary" id="dailyBtn">Начать тренировку</button></div><button class="boss" data-action="boss">⚡ BOSS CHALLENGE</button><div class="section-title">ТОЧЕЧНАЯ ТРЕНИРОВКА</div><div class="muted">10 вопросов по выбранному навыку. Система чаще возвращает слабые темы и ошибки.</div>'+list+'<button class="secondary" style="margin-top:14px" data-action="mistakes">↻ Повторить мои ошибки</button><div class="footer">Не учи правильные варианты наизусть. Тренируй judgement: последствия, trade-offs, риск, economics, people и executive communication.</div></main>';
  document.querySelectorAll(".skill-btn").forEach(b=>b.onclick=()=>startSkill(b.dataset.skill));
- document.querySelectorAll(".dur").forEach(b=>b.onclick=()=>{duration=+b.dataset.d;document.querySelectorAll(".dur").forEach(x=>x.classList.remove("selected"));b.classList.add("selected")});
  document.querySelector("#dailyBtn").onclick=daily;
 }
 function chooseQuestions(pool,n){
@@ -123,7 +122,7 @@ function chooseQuestions(pool,n){
  }
  return out;
 }
-function daily(){mode="daily";let n=duration===30?20:duration===45?30:40;session=chooseQuestions(Q,n);i=0;hits=0;question()}
+function daily(){mode="daily";session=chooseQuestions(Q,10);i=0;hits=0;question()}
 function startSkill(s){mode=s;session=chooseQuestions(Q.filter(x=>x.s===s),10);i=0;hits=0;question()}
 function boss(){mode="boss";session=chooseQuestions(Q.filter(x=>x.d>=3),6);i=0;hits=0;question()}
 function mistakeTraining(){let ids=Object.keys(p.mistakes).filter(id=>p.mistakes[id]>0);let pool=Q.filter(x=>ids.includes(x.id));if(!pool.length){alert("Пока нет ошибок для повторения. Они появятся после первых тренировок.");return}mode="mistakes";session=chooseQuestions(pool,Math.min(15,pool.length));i=0;hits=0;question()}
