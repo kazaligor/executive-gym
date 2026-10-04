@@ -7,8 +7,6 @@ import java.time.temporal.ChronoUnit;
 
 public class ProgressStore {
     private final SharedPreferences p;
-    private static final String[] KEYS={"strategy","decision","leadership","business","communication","effectiveness"};
-
     public ProgressStore(Context c){ p=c.getSharedPreferences("progress",Context.MODE_PRIVATE); }
 
     public int xp(){return p.getInt("xp",0);}
@@ -28,14 +26,18 @@ public class ProgressStore {
         return "effectiveness";
     }
 
+    public int wrongCount(String skill){return p.getInt(skillKey(skill)+"_wrong",0);}
+
     public void answer(String skill, boolean correct){
         String k=skillKey(skill);
         int old=score(skill);
         int next=Math.max(0,Math.min(100,old+(correct?4:-3)));
-        SharedPreferences.Editor e=p.edit().putInt(k,next)
+        SharedPreferences.Editor e=p.edit()
+            .putInt(k,next)
             .putInt("xp",xp()+(correct?12:4))
             .putInt("answered",totalAnswered()+1);
         if(correct)e.putInt("correct",totalCorrect()+1);
+        else e.putInt(k+"_wrong",wrongCount(skill)+1);
         e.apply();
     }
 
