@@ -72,7 +72,7 @@ const esc=x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"
 function menu(){return '<div class="nav"><button data-action="home">Главная</button></div>'}
 function home(){
  const list=S.map(s=>'<div class="skill"><button class="secondary skill-btn" data-skill="'+esc(s)+'">'+esc(s)+'</button></div>').join("");
- document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">EXECUTIVE GYM</div><div class="subtitle">Тренажёр управленческого мышления · Senior PM → Head → Director/VP</div><div class="card"><b>Ежедневная тренировка</b><p class="muted">10 управленческих кейсов из всех шести направлений. Сначала прочитай ситуацию и сформулируй своё решение, затем сразу изучи разбор.</p><button class="primary" id="dailyBtn">Начать тренировку</button></div><button class="boss" data-action="boss">⚡ BOSS CHALLENGE</button><div class="section-title">ТОЧЕЧНАЯ ТРЕНИРОВКА</div><div class="muted">10 кейсов по выбранному управленческому навыку.</div>'+list+'<div class="footer">Задача тренировки — не угадать правильный вариант, а научиться самостоятельно видеть проблему, trade-offs, риски, economics, людей и следующий управленческий шаг.</div></main>';
+ document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">EXECUTIVE GYM</div><div class="subtitle">Тренажёр управленческого мышления · Senior PM → Head → Director/VP</div><div class="card"><b>Ежедневная тренировка</b><p class="muted">10 управленческих кейсов из всех шести направлений. Сначала прочитай ситуацию и сформулируй своё решение, затем сразу изучи разбор.</p><button class="primary" id="dailyBtn">Начать тренировку</button></div><div class="section-title">ТОЧЕЧНАЯ ТРЕНИРОВКА</div><div class="muted">10 кейсов по выбранному управленческому навыку.</div>'+list+'<div class="footer">Задача тренировки — не угадать правильный вариант, а научиться самостоятельно видеть проблему, trade-offs, риски, economics, людей и следующий управленческий шаг.</div></main>';
  document.querySelectorAll(".skill-btn").forEach(b=>b.onclick=()=>startSkill(b.dataset.skill));
  document.querySelector("#dailyBtn").onclick=daily;
 }
@@ -85,7 +85,79 @@ function chooseQuestions(pool,n){
 }
 function daily(){mode="daily";session=chooseQuestions(Q,10);i=0;question()}
 function startSkill(s){mode=s;session=chooseQuestions(Q.filter(x=>x.s===s),10);i=0;question()}
-function boss(){mode="boss";session=chooseQuestions(Q.filter(x=>x.d>=3),Math.min(10,Q.filter(x=>x.d>=3).length));i=0;question()}
+function practicalTakeaway(q){
+ const actions={
+  "Стратегическое мышление":"Зафиксируй outcome, критерии выбора и 1–2 осознанных trade-offs. Если не можешь назвать, от чего отказываешься, приоритет ещё не определён.",
+  "Решение и judgment":"Перед решением отдели факты от предположений и назови информацию, которая способна изменить выбор. Для обратимых решений заранее поставь checkpoint.",
+  "Лидерство и люди":"Определи владельца, границы самостоятельности и ожидаемый результат. Хорошее управленческое решение должно снижать зависимость команды от руководителя.",
+  "Бизнес и P&L":"Переведи решение в экономический эффект: какой драйвер меняется, когда появляется результат, сколько капитала требуется и какой downside допустим.",
+  "Коммуникация руководителя":"Сформулируй одно решение, которое должен принять адресат, и дай ему контекст, последствия, trade-offs и свою рекомендацию. Не перекладывай на него сбор смысла из деталей.",
+  "Личная эффективность":"Спроси себя, что из этой работы можно убрать, делегировать или превратить в систему. Если одна и та же проблема повторяется, ищи системную причину, а не ещё один ручной фикс."
+ };
+ const caseAction={
+  "st1":"В этом кейсе это означает выбрать 6 задач и явно назвать цену остальных 8.",
+  "st2":"В этом кейсе это означает остановить работу над функциями без проверяемой связи с результатом.",
+  "st3":"В этом кейсе это означает пересобрать roadmap после изменения регуляторных ограничений, а не защищать старые инвестиции.",
+  "st4":"В этом кейсе это означает проверить вторичные эффекты на клиентов, операционные процессы и экономику.",
+  "st5":"В этом кейсе это означает оставить одну главную метрику результата и несколько guardrails.",
+  "st6":"В этом кейсе это означает распределить ресурс между инициативами с разным risk-adjusted value.",
+  "st7":"В этом кейсе это означает искать защиту бизнеса вне самой функции — в данных, distribution, switching costs или системе.",
+  "st8":"В этом кейсе это означает заранее определить сигналы, при которых стратегия меняется.",
+  "st9":"В этом кейсе это означает менять узкое место процесса, а не выбирать сторону конфликта.",
+  "st10":"В этом кейсе это означает показать upside, downside, assumptions, mitigations и конкретную рекомендацию.",
+  "de1":"В этом кейсе это означает искать не «все данные», а только те, которые реально могут изменить решение.",
+  "de2":"В этом кейсе это означает считать одновременно цену ошибки и цену бездействия.",
+  "de3":"В этом кейсе это означает принять обратимое решение сейчас и назначить точку пересмотра.",
+  "de4":"В этом кейсе это означает сначала посчитать expected value, а затем проверить, приемлем ли downside.",
+  "de5":"В этом кейсе это означает эскалировать только то, что выходит за mandate или несёт существенный необратимый риск.",
+  "de6":"В этом кейсе это означает оценивать качество решения по информации, доступной в момент выбора.",
+  "de7":"В этом кейсе это означает превратить предполагаемые причины провала в конкретные preventive actions.",
+  "de8":"В этом кейсе это означает фиксировать rationale и assumptions, чтобы позже объективно пересмотреть решение.",
+  "de9":"В этом кейсе это означает обновить вероятность гипотезы и проверить, меняет ли это исходный выбор.",
+  "de10":"В этом кейсе это означает после решения обеспечить commitment команды и заранее определить review point.",
+  "le1":"В этом кейсе это означает передать не только задачу, но и право решения в понятных границах.",
+  "le2":"В этом кейсе это означает отделить высокий результат от допустимого стандарта поведения.",
+  "le3":"В этом кейсе это означает измерять 1:1 рост самостоятельности сотрудника, а не объём отчётности.",
+  "le4":"В этом кейсе это означает устранить root cause и добавить guardrail, не забирая ownership.",
+  "le5":"В этом кейсе это означает сначала устранить конфликт целей и decision rights, а уже потом разбирать отношения.",
+  "le6":"В этом кейсе это означает назвать gap, expectation, поддержку, срок и consequence.",
+  "le7":"В этом кейсе это означает убрать key-person risk через второго владельца и knowledge transfer.",
+  "le8":"В этом кейсе это означает проверять judgement и leadership кейсами, а не только CV.",
+  "le9":"В этом кейсе это означает сделать раннюю эскалацию безопасной и одновременно сохранить accountability.",
+  "le10":"В этом кейсе это означает заменить личный контроль operating model: ownership, interfaces, decision rights и cadence.",
+  "bu1":"В этом кейсе это означает считать влияние изменения цены на revenue и margin по сегментам.",
+  "bu2":"В этом кейсе это означает разобрать fixed/variable costs и понять, как меняется operating leverage.",
+  "bu3":"В этом кейсе это означает сравнить не только ROI, но и риск, срок возврата и strategic value.",
+  "bu4":"В этом кейсе это означает разложить падение прибыли на price, volume, mix и cost drivers.",
+  "bu5":"В этом кейсе это означает проверить payback и retention, а не останавливаться на LTV > CAC.",
+  "bu6":"В этом кейсе это означает искать разрыв между P&L и cash через working capital, capex и debt service.",
+  "bu7":"В этом кейсе это означает сравнить полный TCO и exit cost, а не только цену vendor.",
+  "bu8":"В этом кейсе это означает защищать must-win capabilities и останавливать низкоценную работу, а не резать всё одинаково.",
+  "bu9":"В этом кейсе это означает найти assumptions, которые сильнее всего меняют бизнес-кейс, и проверить именно их.",
+  "bu10":"В этом кейсе это означает сравнить продукты по ROIC и потреблению дефицитного капитала.",
+  "co1":"В этом кейсе это означает дать CEO один сигнал, один ключевой риск и одно требуемое решение.",
+  "co2":"В этом кейсе это означает начать встречу с decision и закончить owner, deadline и next step.",
+  "co3":"В этом кейсе это означает обменять «нет» на варианты с понятной ценой каждого trade-off.",
+  "co4":"В этом кейсе это означает сообщить риск до того, как он станет сюрпризом, и принести mitigation.",
+  "co5":"В этом кейсе это означает спорить через shared goal, evidence и trade-offs, а не через статус.",
+  "co6":"В этом кейсе это означает превратить 30 слайдов в narrative, ведущий к конкретной рекомендации.",
+  "co7":"В этом кейсе это означает давать скидку только в обмен на измеримый commitment.",
+  "co8":"В этом кейсе это означает фиксировать written decision, owner, deadline и non-goals.",
+  "co9":"В этом кейсе это означает обсуждать наблюдаемые факты, impact, expectation и конкретную просьбу.",
+  "co10":"В этом кейсе это означает за минуту донести problem, customer, value и ask.",
+  "ef1":"В этом кейсе это означает защищать блоки глубокой работы и ограничивать окна коммуникации.",
+  "ef2":"В этом кейсе это означает сначала удалить и делегировать лишнее, а уже потом ускорять оставшееся.",
+  "ef3":"В этом кейсе это означает требовать от команды варианты и recommendation вместо готового ответа.",
+  "ef4":"В этом кейсе это означает провести аудит purpose встреч и изменить их cadence.",
+  "ef5":"В этом кейсе это означает ставить сложные решения в периоды максимальной когнитивной энергии.",
+  "ef6":"В этом кейсе это означает устранить класс повторяющихся проблем через system fix, automation, owner или policy.",
+  "ef7":"В этом кейсе это означает определить decision matrix и thresholds для эскалации.",
+  "ef8":"В этом кейсе это означает завершать weekly review новым фокусом и решениями, а не отчётом о прошлом.",
+  "ef9":"В этом кейсе это означает измерять рост leverage, а не количество задач, которые ты лично обработал.",
+  "ef10":"В этом кейсе это означает связать цели, priorities, calendar, decisions и review в единый управленческий цикл."
+ };
+ return (actions[q.s]||"Сформулируй конкретное действие, критерий успеха и следующий checkpoint.")+" "+(caseAction[q.id]||"Преврати этот принцип в конкретное действие в ближайшем рабочем цикле.");
+}
 function solutionText(q){
  const focus={
   "Стратегическое мышление":"Сначала определи outcome и ограничения, затем сравни варианты по последствиям и цене trade-off.",
@@ -95,16 +167,16 @@ function solutionText(q){
   "Коммуникация руководителя":"Сформулируй recommendation через контекст, ключевой сигнал, последствия, trade-offs и конкретный ask.",
   "Личная эффективность":"Ищи leverage: что убрать, делегировать, систематизировать или превратить в повторяемый operating mechanism."
  };
- return '<div class="feedback card"><div class="solution-label">РЕШЕНИЕ КЕЙСА</div><h3>'+esc(q.t)+'</h3><p>'+esc(q.e)+'</p><div class="solution-section"><b>Как мыслить</b><p>'+esc(focus[q.s]||"Сначала сформулируй проблему, ограничения и критерии хорошего решения. Затем сравни варианты по последствиям.")+'</p></div><div class="solution-section"><b>Практический вывод</b><p>На уровне руководителя важно не просто выбрать действие, а объяснить, почему оно создаёт наибольшую ценность при приемлемом риске и что должно произойти дальше.</p></div></div>';
+ return '<div class="feedback card"><div class="solution-label">РЕШЕНИЕ КЕЙСА</div><h3>'+esc(q.t)+'</h3><p>'+esc(q.e)+'</p><div class="solution-section"><b>Как мыслить</b><p>'+esc(focus[q.s]||"Сначала сформулируй проблему, ограничения и критерии хорошего решения. Затем сравни варианты по последствиям.")+'</p></div><div class="solution-section"><b>Практический вывод</b><p>'+esc(practicalTakeaway(q))+'</p></div></div>';
 }
 function question(){
  let q=session[i],progress=Math.round(i/session.length*100);
- document.querySelector("#app").innerHTML='<main class="shell"><div class="topbar"><button class="back" onclick="home()">← Назад</button><b>'+esc(mode==="daily"?"ЕЖЕДНЕВНАЯ":mode==="boss"?"BOSS CHALLENGE":"ТОЧЕЧНАЯ")+'</b></div><div class="progress"><i style="width:'+progress+'%"></i></div><div class="question-no">'+(i+1)+' / '+session.length+' · '+esc(q.s)+' · Level '+q.d+'</div><div class="question-title">'+esc(q.t)+'</div><div class="card scenario"><div class="case-label">КЕЙС</div>'+esc(q.c)+'</div><div class="instruction">Сформулируй своё решение самостоятельно. Затем сравни его с разбором ниже.</div>'+solutionText(q)+'<button class="primary" style="margin-top:12px" id="nextBtn">'+(i+1<session.length?"Следующий кейс":"Завершить тренировку")+'</button></main>';
+ document.querySelector("#app").innerHTML='<main class="shell"><div class="topbar"><button class="back" onclick="home()">← Назад</button><b>'+esc(mode==="daily"?"ЕЖЕДНЕВНАЯ":"ТОЧЕЧНАЯ")+'</b></div><div class="progress"><i style="width:'+progress+'%"></i></div><div class="question-no">'+(i+1)+' / '+session.length+' · '+esc(q.s)+' · Level '+q.d+'</div><div class="question-title">'+esc(q.t)+'</div><div class="card scenario"><div class="case-label">КЕЙС</div>'+esc(q.c)+'</div><div class="instruction">Сформулируй своё решение самостоятельно. Затем сравни его с разбором ниже.</div>'+solutionText(q)+'<button class="primary" style="margin-top:12px" id="nextBtn">'+(i+1<session.length?"Следующий кейс":"Завершить тренировку")+'</button></main>';
  document.querySelector("#nextBtn").onclick=i+1<session.length?next:finish;
 }
 function next(){i++;question()}
 function finish(){
- document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">'+(mode==="boss"?"BOSS CHALLENGE ЗАВЕРШЁН":"ТРЕНИРОВКА ЗАВЕРШЕНА")+'</div><div class="card"><b>Тренировка завершена</b><p class="muted">Ты разобрал '+session.length+' управленческих кейсов. В следующей тренировке будут новые кейсы.</p></div><button class="primary" onclick="home()">Вернуться к главной</button></main>';
+ document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">ТРЕНИРОВКА ЗАВЕРШЕНА</div><div class="card"><b>Тренировка завершена</b><p class="muted">Ты разобрал '+session.length+' управленческих кейсов. В следующей тренировке будут новые кейсы.</p></div><button class="primary" onclick="home()">Вернуться к главной</button></main>';
 }
 home();
 
@@ -112,8 +184,7 @@ document.addEventListener("click",function(e){
  const el=e.target.closest("[data-action]");
  if(!el)return;
  if(el.dataset.action==="home")home();
- else if(el.dataset.action==="boss")boss();
-});
+ });
 window.addEventListener("error",function(e){
  const app=document.querySelector("#app");
  if(app && !app.dataset.runtimeError){
