@@ -171,7 +171,7 @@ function solutionText(q){
 }
 function question(){
  let q=session[i],progress=Math.round(i/session.length*100);
- document.querySelector("#app").innerHTML='<main class="shell"><div class="topbar"><button class="back" onclick="home()">← Назад</button><b>'+esc(mode==="daily"?"ЕЖЕДНЕВНАЯ":"ТОЧЕЧНАЯ")+'</b></div><div class="progress"><i style="width:'+progress+'%"></i></div><div class="question-no">'+(i+1)+' / '+session.length+' · '+esc(q.s)+' · Level '+q.d+'</div><div class="question-title">'+esc(q.t)+'</div><div class="card scenario"><div class="case-label">КЕЙС</div>'+esc(q.c)+'</div><div class="instruction">Сформулируй своё решение самостоятельно. Затем сравни его с разбором ниже.</div>'+solutionText(q)+'<button class="primary" style="margin-top:12px" id="nextBtn">'+(i+1<session.length?"Следующий кейс":"Завершить тренировку")+'</button></main>';
+ document.querySelector("#app").innerHTML='<main class="shell"><div class="topbar"><button class="back" onclick="home()">← Назад</button><b>'+esc(mode==="daily"?"ЕЖЕДНЕВНАЯ":"ТОЧЕЧНАЯ")+'</b></div><div class="progress"><i style="width:'+progress+'%"></i></div><div class="question-no">'+(i+1)+' / '+session.length+' · '+esc(q.s)+'+'</div><div class="question-title">'+esc(q.t)+'</div><div class="card scenario"><div class="case-label">КЕЙС</div>'+esc(q.c)+'</div><div class="instruction">Сформулируй своё решение самостоятельно. Затем сравни его с разбором ниже.</div>'+solutionText(q)+'<button class="primary" style="margin-top:12px" id="nextBtn">'+(i+1<session.length?"Следующий кейс":"Завершить тренировку")+'</button></main>';
  document.querySelector("#nextBtn").onclick=i+1<session.length?next:finish;
 }
 function next(){i++;question()}
