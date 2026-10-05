@@ -67,100 +67,52 @@ q("ef8",S[5],"Weekly review","Что является результатом с�
 q("ef9",S[5],"Stop doing","Что отличает Head от сильного Senior PM?",2,["Больше часов","Умение перестать делать лично то, что должно работать через систему и людей","Больше задач","Больше встреч"],"Переход к Head — это рост leverage и масштаба ответственности.","leadership scale",["leverage"]),
 q("ef10",S[5],"Personal operating system","Как строить личную систему управления?",1,["Только to-do list","Цели → priorities → calendar → decision log → review → learning loop","Только календарь","Только OKR"],"Personal operating system соединяет намерения, execution и learning.","personal effectiveness",2,["learning loop"])
 ];
-// Defensive normalization: some legacy questions were created with the answer/options arguments shifted.
-Q.forEach(x=>{
- if(!Array.isArray(x.o)){
-   const answer=x.o, options=x.a, originalTerm=x.d, originalTerms=x.terms;
-   x.o=Array.isArray(options)?options:[];
-   x.a=Number.isInteger(answer)?answer:0;
-   x.d=typeof originalTerms==="number"?originalTerms:2;
-   x.terms=[originalTerm].concat(Array.isArray(originalTerms)?originalTerms:[]).filter(Boolean);
- }
-});
-
-// Canonical answer key — audited against every option and explanation.
-const ANSWERS={
- st1:2,st2:1,st3:2,st4:2,st5:1,st6:1,st7:1,st8:1,st9:1,st10:2,
- de1:2,de2:1,de3:1,de4:0,de5:1,de6:1,de7:1,de8:1,de9:1,de10:1,
- le1:1,le2:1,le3:2,le4:1,le5:1,le6:1,le7:1,le8:1,le9:1,le10:1,
- bu1:1,bu2:1,bu3:2,bu4:1,bu5:1,bu6:1,bu7:1,bu8:1,bu9:1,bu10:1,
- co1:1,co2:1,co3:1,co4:1,co5:1,co6:1,co7:1,co8:1,co9:1,co10:1,
- ef1:1,ef2:1,ef3:1,ef4:1,ef5:1,ef6:1,ef7:1,ef8:1,ef9:1,ef10:1
-};
-Q.forEach(x=>{if(ANSWERS[x.id]!==undefined)x.a=ANSWERS[x.id]});
-Q.forEach(x=>{
- if(!Array.isArray(x.o)||!Number.isInteger(x.a)||x.a<0||x.a>=x.o.length){
-   throw new Error("Invalid answer key: "+x.id);
- }
-});
-
-
-let p=JSON.parse(localStorage.getItem("eg")||"null")||{xp:0,streak:0,lastDay:"",answered:0,correct:0,scores:{},mistakes:{},history:[],achievements:[],schemaVersion:5};
-if(p.schemaVersion<5){
- p={xp:0,streak:0,lastDay:"",answered:0,correct:0,scores:{},mistakes:{},history:[],achievements:[],schemaVersion:5};
-}
-S.forEach(s=>{if(p.scores[s]==null)p.scores[s]=0});
-const save=()=>localStorage.setItem("eg",JSON.stringify(p));
+let session=[],i=0,mode="daily";
 const esc=x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-const pct=x=>Math.round(x);
-let session=[],i=0,hits=0,mode="daily";
-let todayKey=()=>new Date().toISOString().slice(0,10);
-function level(){return Math.floor(p.xp/250)+1}
 function menu(){return '<div class="nav"><button data-action="home">Главная</button></div>'}
 function home(){
- const list=S.map(s=>'<div class="skill"><button class="secondary skill-btn" data-skill="'+esc(s)+'">'+esc(s)+'</button><div class="score">'+p.scores[s]+'/100</div></div>').join("");
- document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">EXECUTIVE GYM</div><div class="subtitle">Тренажёр управленческого мышления · Senior PM → Head → Director/VP</div><div class="stats"><div class="stat"><b>УРОВЕНЬ '+level()+'</b><span>'+p.xp+' XP</span></div><div class="stat"><b>🔥 '+p.streak+' дней</b><span>'+p.correct+'/'+p.answered+' верных</span></div></div><div class="card"><b>Ежедневная тренировка</b><p class="muted">Общая тренировка · 10 вопросов по всем шести управленческим навыкам.</p><button class="primary" id="dailyBtn">Начать тренировку</button></div><button class="boss" data-action="boss">⚡ BOSS CHALLENGE</button><div class="section-title">ТОЧЕЧНАЯ ТРЕНИРОВКА</div><div class="muted">10 вопросов по выбранному навыку. Система чаще возвращает слабые темы и ошибки.</div>'+list+'<button class="secondary" style="margin-top:14px" data-action="mistakes">↻ Повторить мои ошибки</button><div class="footer">Не учи правильные варианты наизусть. Тренируй judgement: последствия, trade-offs, риск, economics, people и executive communication.</div></main>';
+ const list=S.map(s=>'<div class="skill"><button class="secondary skill-btn" data-skill="'+esc(s)+'">'+esc(s)+'</button></div>').join("");
+ document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">EXECUTIVE GYM</div><div class="subtitle">Тренажёр управленческого мышления · Senior PM → Head → Director/VP</div><div class="card"><b>Ежедневная тренировка</b><p class="muted">10 управленческих кейсов из всех шести направлений. Сначала прочитай ситуацию и сформулируй своё решение, затем сразу изучи разбор.</p><button class="primary" id="dailyBtn">Начать тренировку</button></div><button class="boss" data-action="boss">⚡ BOSS CHALLENGE</button><div class="section-title">ТОЧЕЧНАЯ ТРЕНИРОВКА</div><div class="muted">10 кейсов по выбранному управленческому навыку.</div>'+list+'<div class="footer">Задача тренировки — не угадать правильный вариант, а научиться самостоятельно видеть проблему, trade-offs, риски, economics, людей и следующий управленческий шаг.</div></main>';
  document.querySelectorAll(".skill-btn").forEach(b=>b.onclick=()=>startSkill(b.dataset.skill));
  document.querySelector("#dailyBtn").onclick=daily;
 }
 function chooseQuestions(pool,n){
  let a=pool.slice(),out=[];
  while(out.length<n&&a.length){
-   a.sort((x,y)=>((p.scores[x.s]-p.scores[y.s])*1.5)+(y.d-x.d)+((p.mistakes[y.id]||0)-(p.mistakes[x.id]||0))*2);
-   let top=Math.min(a.length,Math.max(4,Math.ceil(a.length*.35)));
-   out.push(a.splice(Math.floor(Math.random()*top),1)[0]);
+   out.push(a.splice(Math.floor(Math.random()*a.length),1)[0]);
  }
  return out;
 }
-function daily(){mode="daily";session=chooseQuestions(Q,10);i=0;hits=0;question()}
-function startSkill(s){mode=s;session=chooseQuestions(Q.filter(x=>x.s===s),10);i=0;hits=0;question()}
-function boss(){mode="boss";session=chooseQuestions(Q.filter(x=>x.d>=3),6);i=0;hits=0;question()}
-function mistakeTraining(){let ids=Object.keys(p.mistakes).filter(id=>p.mistakes[id]>0);let pool=Q.filter(x=>ids.includes(x.id));if(!pool.length){alert("Пока нет ошибок для повторения. Они появятся после первых тренировок.");return}mode="mistakes";session=chooseQuestions(pool,Math.min(15,pool.length));i=0;hits=0;question()}
+function daily(){mode="daily";session=chooseQuestions(Q,10);i=0;question()}
+function startSkill(s){mode=s;session=chooseQuestions(Q.filter(x=>x.s===s),10);i=0;question()}
+function boss(){mode="boss";session=chooseQuestions(Q.filter(x=>x.d>=3),Math.min(10,Q.filter(x=>x.d>=3).length));i=0;question()}
+function solutionText(q){
+ const focus={
+  "Стратегическое мышление":"Сначала определи outcome и ограничения, затем сравни варианты по последствиям и цене trade-off.",
+  "Решение и judgment":"Отдели факты от assumptions, оцени обратимость решения, стоимость ожидания и информацию, которая действительно может изменить выбор.",
+  "Лидерство и люди":"Смотри не только на текущую проблему, но и на ownership, ожидания, decision rights и способность команды работать самостоятельно.",
+  "Бизнес и P&L":"Свяжи решение с economics: revenue, margin, costs, cash, risk, capital efficiency и time-to-value.",
+  "Коммуникация руководителя":"Сформулируй recommendation через контекст, ключевой сигнал, последствия, trade-offs и конкретный ask.",
+  "Личная эффективность":"Ищи leverage: что убрать, делегировать, систематизировать или превратить в повторяемый operating mechanism."
+ };
+ return '<div class="feedback card"><div class="solution-label">РЕШЕНИЕ КЕЙСА</div><h3>'+esc(q.t)+'</h3><p>'+esc(q.e)+'</p><div class="solution-section"><b>Как мыслить</b><p>'+esc(focus[q.s]||"Сначала сформулируй проблему, ограничения и критерии хорошего решения. Затем сравни варианты по последствиям.")+'</p></div><div class="solution-section"><b>Практический вывод</b><p>На уровне руководителя важно не просто выбрать действие, а объяснить, почему оно создаёт наибольшую ценность при приемлемом риске и что должно произойти дальше.</p></div></div>';
+}
 function question(){
  let q=session[i],progress=Math.round(i/session.length*100);
- document.querySelector("#app").innerHTML='<main class="shell"><div class="topbar"><button class="back" onclick="home()">← Назад</button><b>'+esc(mode==="daily"?"ЕЖЕДНЕВНАЯ":mode==="boss"?"BOSS CHALLENGE":mode==="mistakes"?"ОШИБКИ":"ТОЧЕЧНАЯ")+'</b></div><div class="progress"><i style="width:'+progress+'%"></i></div><div class="question-no">'+(i+1)+' / '+session.length+' · '+esc(q.s)+' · Level '+q.d+'</div><div class="question-title">'+esc(q.t)+'</div><div class="card scenario">'+esc(q.c)+'</div><div class="instruction">Выбери действие руководителя.</div><div id="opts">'+q.o.map((o,n)=>'<button class="option" data-n="'+n+'">'+(n+1)+'. '+esc(o)+'</button>').join("")+'</div></main>';
- document.querySelectorAll(".option").forEach(b=>b.onclick=()=>choose(+b.dataset.n));
-}
-function choose(n){
- let q=session[i],ok=n===q.a;if(ok)hits++;
- p.scores[q.s]=Math.max(0,Math.min(100,p.scores[q.s]+(ok?4:-3)));
- p.xp+=ok?12:4;p.answered++;if(ok)p.correct++;else p.mistakes[q.id]=(p.mistakes[q.id]||0)+1;
- save();
- document.querySelectorAll(".option").forEach((b,k)=>{b.disabled=true;if(k===q.a)b.classList.add("correct");if(k===n&&k!==q.a)b.classList.add("wrong")});
- document.querySelector("#opts").insertAdjacentHTML("afterend",'<div class="feedback card"><h3>'+(ok?"✓ Верно":"✕ Разбор решения")+'</h3><p>'+esc(q.e)+'</p><div class="error-tag">'+(ok?"Навык подтверждён":"Ошибка: "+esc(q.id))+'</div></div>'+'<button class="primary" style="margin-top:12px" id="nextBtn">'+(i+1<session.length?"Следующее":"Завершить")+'</button>');
+ document.querySelector("#app").innerHTML='<main class="shell"><div class="topbar"><button class="back" onclick="home()">← Назад</button><b>'+esc(mode==="daily"?"ЕЖЕДНЕВНАЯ":mode==="boss"?"BOSS CHALLENGE":"ТОЧЕЧНАЯ")+'</b></div><div class="progress"><i style="width:'+progress+'%"></i></div><div class="question-no">'+(i+1)+' / '+session.length+' · '+esc(q.s)+' · Level '+q.d+'</div><div class="question-title">'+esc(q.t)+'</div><div class="card scenario"><div class="case-label">КЕЙС</div>'+esc(q.c)+'</div><div class="instruction">Сформулируй своё решение самостоятельно. Затем сравни его с разбором ниже.</div>'+solutionText(q)+'<button class="primary" style="margin-top:12px" id="nextBtn">'+(i+1<session.length?"Следующий кейс":"Завершить тренировку")+'</button></main>';
  document.querySelector("#nextBtn").onclick=i+1<session.length?next:finish;
 }
 function next(){i++;question()}
 function finish(){
- let now=todayKey(),type=mode==="daily"?"daily":mode==="boss"?"boss":mode==="mistakes"?"mistakes":"skill";
- p.history.push({date:now,type,skill:type==="skill"?mode:null,total:session.length,correct:hits,xp:hits*12+(session.length-hits)*4});
- p.history=p.history.slice(-90);
- if(type==="daily"&&p.lastDay!==now){let d=new Date();d.setDate(d.getDate()-1);let prev=d.toISOString().slice(0,10);p.streak=p.lastDay===prev?p.streak+1:1;p.lastDay=now}
- save();
- let score=Math.round(hits/session.length*100),xp=hits*12+(session.length-hits)*4;
- document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">'+(mode==="boss"?"BOSS CHALLENGE ЗАВЕРШЁН":mode==="daily"?"ДЕНЬ ЗАВЕРШЁН":"ТРЕНИРОВКА ЗАВЕРШЕНА")+'</div><div class="bigxp">+'+xp+' XP</div><div class="result">'+hits+' из '+session.length+' · '+score+'%</div><div class="card"><b>Профиль обновлён</b><p class="muted">Слабые навыки и ошибочные вопросы теперь получают больший вес в следующих тренировках.</p></div>'+(mode==="boss"?'<div class="card boss-result">Boss Challenge — уровень Director/VP. В следующих версиях здесь появятся ветвящиеся кейсы и итоговая оценка judgement.</div>':"")+'<button class="primary" onclick="'+(mode==="daily"?"home()":mode==="boss"?"home()":"startSkill("+JSON.stringify(mode)+")")+'">'+(mode==="daily"||mode==="boss"||mode==="mistakes"?"Вернуться к главной":"Повторить этот навык")+'</button></main>';
+ document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">'+(mode==="boss"?"BOSS CHALLENGE ЗАВЕРШЁН":"ТРЕНИРОВКА ЗАВЕРШЕНА")+'</div><div class="card"><b>Тренировка завершена</b><p class="muted">Ты разобрал '+session.length+' управленческих кейсов. В следующей тренировке будут новые кейсы.</p></div><button class="primary" onclick="home()">Вернуться к главной</button></main>';
 }
 home();
 
 document.addEventListener("click",function(e){
  const el=e.target.closest("[data-action]");
  if(!el)return;
- const action=el.dataset.action;
- if(action==="home")home();
-
- else if(action==="boss")boss();
- else if(action==="mistakes")mistakeTraining();
-
+ if(el.dataset.action==="home")home();
+ else if(el.dataset.action==="boss")boss();
 });
 window.addEventListener("error",function(e){
  const app=document.querySelector("#app");
