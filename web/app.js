@@ -69,7 +69,27 @@ q("ef10",S[5],"Personal operating system","Как строить личную с
 ];
 let session=[],i=0,mode="daily";
 const esc=x=>String(x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-function menu(){return '<div class="nav"><button data-action="home">Главная</button></div>'}
+function menu(){return '<div class="nav"><button data-action="home">Главная</button><button data-action="cases">Кейсы</button></div>'}
+function casesPage(){
+ const groups=S.map((skill,si)=>{
+   const items=Q.filter(x=>x.s===skill).map((q,n)=>'<button class="case-row" data-case="'+esc(q.id)+'"><span class="case-num">'+String(n+1).padStart(2,"0")+'</span><span class="case-main"><b>'+esc(q.t)+'</b><span class="case-topic">'+esc(q.o||"Управленческий кейс")+'</span></span><span class="case-arrow">›</span></button>').join("");
+   return '<section class="case-group"><div class="section-title">'+esc(skill)+'</div>'+items+'</section>';
+ }).join("");
+ document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">КЕЙСЫ</div><div class="subtitle">База управленческих кейсов Executive Gym · '+Q.length+' кейсов</div><div class="card cases-intro"><b>База кейсов</b><p class="muted">Здесь собраны все кейсы тренажёра. Открой любой кейс, чтобы посмотреть ситуацию, тему, разбор и практический вывод.</p></div>'+groups+'</main>';
+ document.querySelectorAll(".case-row").forEach(b=>b.onclick=()=>caseDetail(b.dataset.case));
+}
+function caseDetail(id){
+ const q=Q.find(x=>x.id===id); if(!q){casesPage();return;}
+ const focus={
+  "Стратегическое мышление":"Сначала определи outcome и ограничения, затем сравни варианты по последствиям и цене trade-off.",
+  "Решение и judgment":"Отдели факты от assumptions, оцени обратимость решения, стоимость ожидания и информацию, которая действительно может изменить выбор.",
+  "Лидерство и люди":"Смотри не только на текущую проблему, но и на ownership, ожидания, decision rights и способность команды работать самостоятельно.",
+  "Бизнес и P&L":"Свяжи решение с economics: revenue, margin, costs, cash, risk, capital efficiency и time-to-value.",
+  "Коммуникация руководителя":"Сформулируй recommendation через контекст, ключевой сигнал, последствия, trade-offs и конкретный ask.",
+  "Личная эффективность":"Ищи leverage: что убрать, делегировать, систематизировать или превратить в повторяемый operating mechanism."
+ };
+ document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="case-detail-head"><button class="back" onclick="casesPage()">← Все кейсы</button><span class="case-pill">'+esc(q.s)+'</span></div><div class="question-title">'+esc(q.t)+'</div><div class="case-topic-large">'+esc(q.o||"Управленческий кейс")+'</div><div class="card scenario"><div class="case-label">СИТУАЦИЯ</div>'+esc(q.c)+'</div><div class="card feedback"><div class="solution-label">РАЗБОР</div><p>'+esc(q.e)+'</p><div class="solution-section"><b>Как мыслить</b><p>'+esc(focus[q.s]||"Сначала сформулируй проблему, ограничения и критерии хорошего решения. Затем сравни варианты по последствиям.")+'</p></div><div class="solution-section"><b>Практический вывод</b><p>'+esc(practicalTakeaway(q))+'</p></div></div><button class="primary" onclick="casesPage()">Вернуться к списку</button></main>';
+}
 function home(){
  const list=S.map(s=>'<div class="skill"><button class="secondary skill-btn" data-skill="'+esc(s)+'">'+esc(s)+'</button></div>').join("");
  document.querySelector("#app").innerHTML='<main class="shell">'+menu()+'<div class="brand">EXECUTIVE GYM</div><div class="subtitle">Тренажёр управленческого мышления · Senior PM → Head → Director/VP</div><div class="card"><b>Ежедневная тренировка</b><p class="muted">10 управленческих кейсов из всех шести направлений. Сначала прочитай ситуацию и сформулируй своё решение, затем сразу изучи разбор.</p><button class="primary" id="dailyBtn">Начать тренировку</button></div><div class="section-title">ТОЧЕЧНАЯ ТРЕНИРОВКА</div><div class="muted">10 кейсов по выбранному управленческому навыку.</div>'+list+'<div class="footer">Задача тренировки — не угадать правильный вариант, а научиться самостоятельно видеть проблему, trade-offs, риски, economics, людей и следующий управленческий шаг.</div></main>';
@@ -193,6 +213,7 @@ document.addEventListener("click",function(e){
  const el=e.target.closest("[data-action]");
  if(!el)return;
  if(el.dataset.action==="home")home();
+ if(el.dataset.action==="cases")casesPage();
  });
 window.addEventListener("error",function(e){
  const app=document.querySelector("#app");
